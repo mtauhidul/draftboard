@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 
+import { SITE_DESCRIPTION } from '@/lib/site';
+
 /**
  * Draftboard installs like a native app: open it from your dock or home screen
  * and it runs in its own window, with no browser chrome around the canvas.
@@ -17,9 +19,15 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Draftboard',
     short_name: 'Draftboard',
-    description:
-      'A private, offline sketch board. Your boards are stored in this browser only.',
+    description: SITE_DESCRIPTION,
+    /**
+     * `id` pins the installed app to its origin rather than to `start_url`, so
+     * a future change to the start URL updates the existing installation
+     * instead of being read as a second, separate app.
+     */
+    id: '/',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     background_color: '#121212',
     theme_color: '#121212',

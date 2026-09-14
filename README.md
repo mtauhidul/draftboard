@@ -2,6 +2,8 @@
 
 A private, offline sketch board. Create a board, draw on it, come back later — everything stays on your own device.
 
+Live at **<https://draftboard-canvas.vercel.app>**.
+
 Draftboard is a wrapper around [Excalidraw](https://github.com/excalidraw/excalidraw), the excellent open-source whiteboard library, with a small board manager on top so you can keep several boards instead of one endless canvas.
 
 ## Features
