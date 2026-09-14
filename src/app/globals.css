@@ -1,26 +1,435 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * Excalidraw's UI typeface.
+ *
+ * Excalidraw sets its whole interface in Assistant, the same font it draws
+ * canvas text with. The four woff2 files are copied out of the
+ * `@excalidraw/excalidraw` package (which ships them under the MIT licence)
+ * into `public/fonts`, because CSS in this build resolves neither the package
+ * alias nor a bare `node_modules` specifier. Serving them from `public` also
+ * beats relying on Excalidraw's own `@font-face` rules, which only load once a
+ * board is opened — the boards page needs the font immediately.
+ */
+@font-face {
+  font-family: Assistant;
+  src: url('/fonts/Assistant-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Assistant;
+  src: url('/fonts/Assistant-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Assistant;
+  src: url('/fonts/Assistant-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Assistant;
+  src: url('/fonts/Assistant-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* Excalidraw's own UI stack, so text metrics match the editor canvas. */
+  --font-sans:
+    Assistant, system-ui, BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /*
+   * Excalidraw's two elevation steps, exposed by name. Declaring them here
+   * rather than using `shadow-[var(--shadow-island)]` matters: a bare `var()`
+   * in an arbitrary shadow is ambiguous, so Tailwind cannot tell a shadow from
+   * a shadow colour and emits nothing.
+   */
+  --shadow-island: var(--shadow-island);
+  --shadow-modal: var(--modal-shadow);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/**
+ * Excalidraw's design tokens.
+ *
+ * The values below are copied verbatim from the stylesheet shipped inside
+ * `@excalidraw/excalidraw` (light from `.excalidraw`, dark from
+ * `.excalidraw.theme--dark`). They are redeclared here because Excalidraw scopes
+ * its variables to the `.excalidraw` subtree — anything outside that subtree
+ * (the boards page, our own dialogs) resolves them to nothing.
+ *
+ * Two deliberately different things live side by side:
+ *   1. The shadcn names above are remapped to Excalidraw colours, so every
+ *      existing primitive (Button, Dialog, DropdownMenu…) inherits the look
+ *      with no per-component edits.
+ *   2. Excalidraw's own names are exposed as-is, for markup that already speaks
+ *      its vocabulary (`--island-bg-color`, `--default-border-color`).
+ *
+ * `--radius` is left at 0.625rem so `rounded-lg` is exactly 0.5rem, which is
+ * Excalidraw's `--border-radius-lg` — the radius of every island and button.
+ */
+:root {
+  /* --- 1. shadcn tokens, remapped to Excalidraw --- */
+  --background: #ffffff;
+  --foreground: #1b1b1f;
+  --card: #ffffff;
+  --card-foreground: #1b1b1f;
+  --popover: #ffffff;
+  --popover-foreground: #1b1b1f;
+  --primary: #6965db;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f7;
+  --secondary-foreground: #1b1b1f;
+  --muted: #f2f2f7;
+  --muted-foreground: #5c5c5c;
+  /* Hover surface for ghost controls, matching `--button-hover-bg`. */
+  --accent: #f1f0ff;
+  --accent-foreground: #1b1b1f;
+  --destructive: #ac2b29;
+  --destructive-foreground: #fbcbcc;
+  --border: #ebebeb;
+  --input: #ced4da;
+  --ring: #6965db;
+  --chart-1: #6965db;
+  --chart-2: #5b57d1;
+  --chart-3: #4a47b1;
+  --chart-4: #e3e2fe;
+  --chart-5: #f1f0ff;
+  /*
+   * 0.625rem. The scale above derives from this, which makes the Tailwind steps
+   * land on Excalidraw's radii: `rounded-md` is 0.5rem, exactly Excalidraw's
+   * `--border-radius-lg` and the radius of every island and button. Prefer
+   * `rounded-md` over `rounded-lg` for anything meant to look like an island.
+   */
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1b1b1f;
+  --sidebar-primary: #6965db;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f2f7;
+  --sidebar-accent-foreground: #1b1b1f;
+  --sidebar-border: #ebebeb;
+  --sidebar-ring: #6965db;
+  /* --- 2. Excalidraw tokens --- */
+  --island-bg-color: #ffffff;
+  --default-bg-color: #ffffff;
+  --text-primary-color: #1b1b1f;
+  --color-surface-low: #ececf4;
+  --color-surface-lowest: #ffffff;
+  --color-surface-mid: #f2f2f7;
+  --color-surface-high: #f1f0ff;
+  --color-on-surface: #1b1b1f;
+  --color-primary: #6965db;
+  --color-primary-hover: #5753d0;
+  --color-primary-darker: #5b57d1;
+  --color-primary-darkest: #4a47b1;
+  --color-primary-light: #e3e2fe;
+  --color-danger: #ac2b29;
+  --color-danger-background: #fff0f0;
+  --color-danger-color: #700000;
+  --default-border-color: var(--color-surface-high);
+  /*
+   * Excalidraw derives `--default-border-color` from `--color-surface-high`,
+   * which is right for its own use (a focus ring on an island that already sits
+   * on white) but wrong for an outline drawn *on* the page background: #f1f0ff
+   * on white is effectively invisible. This pair is the same idea tuned for
+   * contrast on `--background`, so flat content can be outlined at 1px while
+   * still reading as peripheral rather than as a heavy divider.
+   */
+  --color-outline: #c6c5e0;
+  --card-outline-color: var(--color-outline);
+  --button-hover-bg: var(--color-surface-high);
+  --input-bg-color: #ffffff;
+  --input-border-color: #ced4da;
+  --input-hover-bg-color: #f1f3f5;
+  --input-label-color: #495057;
+  --dialog-border-color: var(--color-gray-20);
+  --shadow-island:
+    0px 0px 0.9310142993927002px 0px rgba(0, 0, 0, 0.17),
+    0px 0px 3.1270833015441895px 0px rgba(0, 0, 0, 0.08),
+    0px 7px 14px 0px rgba(0, 0, 0, 0.05);
+  --modal-shadow:
+    0px 100px 80px rgba(0, 0, 0, 0.07),
+    0px 41.7776px 33.4221px rgba(0, 0, 0, 0.0503198),
+    0px 22.3363px 17.869px rgba(0, 0, 0, 0.0417275),
+    0px 12.5216px 10.0172px rgba(0, 0, 0, 0.035),
+    0px 6.6501px 5.32008px rgba(0, 0, 0, 0.0282725),
+    0px 2.76726px 2.21381px rgba(0, 0, 0, 0.0196802);
+  --border-radius-lg: 0.5rem;
+  --border-radius-md: 0.375rem;
+  --default-button-size: 2.25rem;
+  /*
+   * The backdrop lattice on the boards page.
+   *
+   * The cell is 20px because that is Excalidraw's own `DEFAULT_GRID_SIZE`, so
+   * the lists that lead to a board are drawn on the same pitch the canvas
+   * underneath that board uses.
+   *
+   * The texture is not Excalidraw's. The canvas draws its grid as dashed 1px
+   * lines in `#e5e5e5`, which reads correctly under a drawing but is far too
+   * loud behind a list of cards. A single dot per cell is the same lattice at
+   * the same pitch with a fraction of the ink, which is what makes it sit as a
+   * backdrop rather than as content.
+   *
+   * The colour is an alpha over the foreground rather than a literal grey, so
+   * one value covers both themes instead of a grey that has to be swapped.
+   */
+  --app-grid-size: 20px;
+  --app-grid-dot: rgba(27, 27, 31, 0.11);
+  --color-gray-10: #f5f5f5;
+  --color-gray-20: #ebebeb;
+  --color-gray-30: #d6d6d6;
+  --color-gray-40: #b8b8b8;
+  --color-gray-50: #999999;
+  --color-gray-60: #7a7a7a;
+  --color-gray-70: #5c5c5c;
+  --color-gray-80: #3d3d3d;
+  --color-gray-85: #242424;
+  --color-gray-90: #1e1e1e;
+  --color-gray-100: #121212;
+}
+
+.dark {
+  /* --- shadcn tokens, remapped to Excalidraw's dark theme --- */
+  --background: #121212;
+  --foreground: #e3e3e8;
+  --card: #232329;
+  --card-foreground: #e3e3e8;
+  --popover: #232329;
+  --popover-foreground: #e3e3e8;
+  --primary: #a8a5ff;
+  /* Excalidraw's own `--color-primary-contrast-color`: black on light-violet. */
+  --primary-foreground: #121212;
+  --secondary: hsl(240 6% 10%);
+  --secondary-foreground: #e3e3e8;
+  --muted: hsl(240 6% 10%);
+  --muted-foreground: #b8b8b8;
+  --accent: #31303b;
+  --accent-foreground: #e3e3e8;
+  --destructive: #d65550;
+  --destructive-foreground: #fbcbcc;
+  --border: #31303b;
+  --input: #2e2e2e;
+  --ring: #a8a5ff;
+  --chart-1: #a8a5ff;
+  --chart-2: #bbb8ff;
+  --chart-3: #beb9ff;
+  --chart-4: #e3e2fe;
+  --chart-5: #31303b;
+  --sidebar: #232329;
+  --sidebar-foreground: #e3e3e8;
+  --sidebar-primary: #a8a5ff;
+  --sidebar-primary-foreground: #121212;
+  --sidebar-accent: #31303b;
+  --sidebar-accent-foreground: #e3e3e8;
+  --sidebar-border: #31303b;
+  --sidebar-ring: #a8a5ff;
+  /* --- Excalidraw tokens, dark --- */
+  --island-bg-color: #232329;
+  --default-bg-color: #121212;
+  --text-primary-color: #e3e3e8;
+  --color-surface-low: hsl(240, 8%, 15%);
+  --color-surface-lowest: hsl(0, 0%, 7%);
+  --color-surface-mid: hsl(240 6% 10%);
+  --color-surface-high: hsl(245, 10%, 21%);
+  --color-on-surface: #e3e3e8;
+  --color-primary: #a8a5ff;
+  --color-primary-hover: #bbb8ff;
+  --color-primary-darker: #b2aeff;
+  --color-primary-darkest: #beb9ff;
+  --color-primary-light: #4f4d6f;
+  --color-danger: #d65550;
+  --color-danger-background: #fbcbcc;
+  --color-danger-color: #261919;
+  --default-border-color: var(--color-surface-high);
+  /* Dark counterpart of the light `--color-outline`; see that comment. */
+  --color-outline: #4a4958;
+  --card-outline-color: var(--color-outline);
+  --button-hover-bg: var(--color-surface-high);
+  --input-bg-color: #121212;
+  --input-border-color: #2e2e2e;
+  --input-hover-bg-color: #181818;
+  --input-label-color: #e9ecef;
+  --dialog-border-color: var(--color-gray-80);
+  /* The dark half of the boards-page lattice; see the `:root` declaration. */
+  --app-grid-dot: rgba(227, 227, 232, 0.09);
+  /*
+   * `--shadow-island`, `--modal-shadow`, the radii, the button size and the
+   * grey ramp are intentionally not repeated here: Excalidraw uses identical
+   * values in both themes, so the `:root` declarations already apply.
+   */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  /*
+   * Tailwind's preflight resets `cursor` on buttons but does not restore it, so
+   * every button in the app reads as a dead text cursor on hover while links
+   * (which the browser gives a pointer by default) do not. Enable the pointer
+   * for anything that is actually clickable, and leave disabled controls alone.
+   */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/**
+ * The boards-page backdrop.
+ *
+ * A dot lattice on the same 20px pitch as Excalidraw's own canvas grid, painted
+ * as a `background-image` so it is a texture rather than content: it never
+ * affects layout, never receives a pointer, and sits behind the board list.
+ *
+ * Only the dots are painted. The tiles are transparent, so whatever surface is
+ * underneath stays visible — the page background today, but the effect is a
+ * translucent overlay rather than a painted one, which is what lets it read as
+ * faint.
+ *
+ * One radial gradient at the tile's origin, repeated. `currentColor` is not
+ * used here because a gradient stop cannot inherit it, so the colour comes from
+ * `--app-grid-dot` instead and each theme supplies its own alpha.
+ */
+@utility app-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--app-grid-dot) 1px,
+    transparent 0
+  );
+  background-size: var(--app-grid-size) var(--app-grid-size);
+}
+
+/*
+ * Two things are hidden from Excalidraw's own chrome, and nothing else.
+ *
+ * The first is the welcome screen, as a whole. It is dead weight in this app —
+ * the canvas always opens an existing board, so the "brand new canvas" state
+ * it exists to fill never normally happens — and its centre panel is the
+ * Excalidraw logo plus a "How to use" link out to the docs. Its hint line and
+ * hint buttons stay, so if the screen ever does appear it still explains the
+ * UI without pointing anywhere.
+ *
+ * The second is the Mermaid dialog's description, three links to
+ * mermaid.js.org. It is the one group that cannot be hidden up front: it
+ * carries the dialog's entrance animation, and an animation cannot start from
+ * a `display: none` keyframe, so suppressing it from the first paint would
+ * change how the dialog opens. `:has()` hides it from the moment the dialog is
+ * in the DOM, which is the only moment the text can be on screen. The dialog
+ * is unreachable through the UI anyway, since `aiEnabled={false}` removes its
+ * only trigger.
+ *
+ * The footer's Help button, the Help dialog it opens, and the Library panel's
+ * "Browse libraries" button are all left exactly as Excalidraw ships them: the
+ * shortcuts in the Help dialog are genuinely useful, and both controls are
+ * Excalidraw's own chrome rather than anything this app added.
+ *
+ * The main menu's "Excalidraw links" group is gone rather than hidden item by
+ * item, because the canvas renders its own `<MainMenu>`; hiding list items
+ * would have left dead separators behind.
+ *
+ * `!important` is load-bearing, not laziness. Excalidraw's own stylesheet is
+ * bundled from a client component, so it is emitted after `globals.css` and
+ * wins any tie on specificity.
+ *
+ * Neither selector is imported from Excalidraw, so both are pinned to class
+ * names this vendored version emits. A future upgrade that renames one
+ * degrades to "the element reappears", never to a broken layout.
+ */
+.excalidraw .welcome-screen-center {
+  display: none !important;
+}
+
+.excalidraw .Modal:has(.ttd-dialog) .ttd-dialog-desc {
+  display: none !important;
+}
+
+/*
+ * The board island has to out-rank Excalidraw's canvas (`--zIndex-canvas: 1`)
+ * and the SVG layer that holds selected shapes (`--zIndex-svgLayer: 3`) to stay
+ * legible and clickable, so it is positioned with `z-index: 10`. Everything
+ * Excalidraw opens *on top of* the canvas should still cover it, and the two
+ * are not ordered by that number at all: the island is a page-level element,
+ * while the menus, palette and toasts live inside `.layer-ui__wrapper`, a
+ * sibling that carries `--zIndex-layerUI: 4`.
+ *
+ * `10` versus `4` is not a comparison the browser makes, because `.excalidraw`
+ * never becomes a stacking context (`position: relative` and `z-index: auto`).
+ * So both the island and the wrapper's whole subtree are ordered as if they sat
+ * in the page together, and the island's `10` wins by default. The wrapper is
+ * only ever meant to be 4 so it can sit above the canvas — it has no reason to
+ * lose to anything outside `.excalidraw`.
+ *
+ * That is exactly what went wrong between roughly 1084px and 1344px wide: the
+ * island moves under the toolbar, landing on the main menu's first entries, and
+ * its opaque fill swallowed their clicks. `elementFromPoint` returned the
+ * island's title, so a click meant for "Open" opened the rename dialog instead.
+ *
+ * `11` is the smallest value that puts the wrapper back on top while staying
+ * far below `--zIndex-modal` (1000) and `--zIndex-toast`, so dialogs, the
+ * command palette and toasts still cover the menu in turn. `!important` is
+ * needed for the same reason as the block above: Excalidraw's own
+ * `.excalidraw .layer-ui__wrapper` rule has identical specificity and is
+ * emitted later.
+ */
+.excalidraw .layer-ui__wrapper {
+  z-index: 11 !important;
 }
