@@ -51,131 +51,98 @@ const COLORS = {
   text: '#e3e3e8',
   /** `--muted-foreground` — the supporting line under the headline. */
   muted: '#b8b8b8',
-  /** `--color-primary` — the app icon's plate. */
-  primary: '#6965db',
-  /** The lighter half of the same accent, for text on a dark surface. */
+  /** The lighter half of `--color-primary`, for text on a dark surface. */
   primaryText: '#a8a5ff',
 } as const;
 
 /**
- * The mark from `src/app/icon.svg`: four nodes on a cross.
+ * The app icon, as something Satori can draw.
  *
- * Built from absolutely positioned boxes rather than an inline `<svg>` because
- * Satori renders flexbox and absolute positioning predictably and its SVG
- * support is narrower — the geometry also stays readable as numbers, which is
- * what makes it checkable by comparing the two drawings' arithmetic.
+ * Satori will not follow a URL and will not accept a JSX `<svg>`, so the icon
+ * goes in as a data URI. Reading it out of `src/app/icon.svg` — instead of
+ * drawing the mark again here — is the whole point of this function: the card
+ * and the favicon are then one file, and the violet plate, the corner radius
+ * and the cross of nodes can only ever change together.
  *
- * `icon.svg` draws a 24-unit mark inside a 32-unit square, so every position
- * and length here is a unit from that file multiplied by `plate / 32`. Writing
- * it that way keeps the correspondence to the icon legible instead of leaving
- * a row of unexplained pixel values.
+ * This file used to rebuild the mark from absolutely positioned boxes, and it
+ * had drifted from the icon in two ways nothing would have caught: it drew a
+ * vertical rule where the icon draws two diagonals, and it never applied the
+ * `translate(5.8 5.8) scale(0.85)` the icon wraps its glyph in, so the mark
+ * sat up and to the left inside the plate and slightly too large. Two drawings
+ * of one shape is one drawing too many, so the plate is gone from here as
+ * well: the icon brings its own, at its own `rx`, in its own violet.
+ *
+ * The icon sits under `src/app/`, which Next does not trace for the module
+ * graph of this route, so `next.config.ts` names it in
+ * `outputFileTracingIncludes` — without that the file is absent from a
+ * deployed standalone build and this read throws at runtime.
  */
-function LogoMark() {
-  const plate = 168;
-  const scale = plate / 32;
-  const white = { position: 'absolute', background: '#ffffff', borderRadius: 999 } as const;
-
-  // The icon's stroke is 2.5 units and its end nodes are r=2, drawn on the two
-  // rules' centre lines — x=12 and y=12 for the cross as a whole.
-  const stroke = 2.5 * scale;
-  const node = 4 * scale;
-  const ruleStart = 6 * scale;
-  const ruleLength = 12 * scale;
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width: plate,
-        height: plate,
-        display: 'flex',
-      }}
-    >
-      {[
-        // the horizontal rule: from x=6 to x=18, on the y=12 centre line
-        { top: 12 * scale - stroke / 2, left: ruleStart, width: ruleLength, height: stroke },
-        // the vertical rule: from y=6 to y=18, on the x=12 centre line
-        { top: ruleStart, left: 12 * scale - stroke / 2, width: stroke, height: ruleLength },
-        // the four nodes, one at each end of the two rules
-        { top: 12 * scale - node / 2, left: 4 * scale - node / 2, width: node, height: node },
-        { top: 12 * scale - node / 2, left: 20 * scale - node / 2, width: node, height: node },
-        { top: 4 * scale - node / 2, left: 12 * scale - node / 2, width: node, height: node },
-        { top: 20 * scale - node / 2, left: 12 * scale - node / 2, width: node, height: node },
-      ].map((box, i) => (
-        <div key={i} style={{ ...white, ...box }} />
-      ))}
-    </div>
-  );
+async function loadIcon() {
+  const svg = await readFile(join(process.cwd(), 'src', 'app', 'icon.svg'));
+  return `data:image/svg+xml;base64,${svg.toString('base64')}`;
 }
 
 export default async function Image() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          // The dark default, so the card looks like the thing it advertises.
-          background: COLORS.surface,
-          padding: 76,
-          fontFamily: 'Assistant',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 168,
-              height: 168,
-              // The icon's own corner radius is 7/32 of its width, so scale it
-              // rather than guessing at a pixel value that happens to fit.
-              borderRadius: (7 / 32) * 168,
-              background: COLORS.primary,
-            }}
-          >
-            <LogoMark />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div
-              style={{
-                fontSize: 40,
-                fontWeight: 700,
-                color: COLORS.text,
-                letterSpacing: -0.5,
-              }}
-            >
-              {SITE_NAME}
-            </div>
-            <div style={{ fontSize: 28, color: COLORS.primaryText }}>
-              a local-first sketch board
-            </div>
-          </div>
-        </div>
+  const icon = await loadIcon();
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+  return new ImageResponse(
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        // The dark default, so the card looks like the thing it advertises.
+        background: COLORS.surface,
+        padding: 76,
+        fontFamily: 'Assistant',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+        {/*
+          The mark is the icon file itself, at 168px — the plate, its corner
+          radius and the violet all come from `icon.svg` rather than from
+          numbers repeated here. It is a plain `<img>` rather than a
+          `next/image` because Satori reads the bytes directly and never
+          touches the image optimiser.
+        */}
+        <img src={icon} width={168} height={168} alt="" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div
             style={{
-              fontSize: 62,
+              fontSize: 40,
               fontWeight: 700,
               color: COLORS.text,
-              lineHeight: 1.15,
-              letterSpacing: -1.5,
+              letterSpacing: -0.5,
             }}
           >
-            Draw freely. Keep it to yourself.
+            {SITE_NAME}
           </div>
-          <div style={{ fontSize: 30, color: COLORS.muted, lineHeight: 1.4 }}>
-            Every board is saved in your own browser. No account, no server,
-            nothing uploaded.
+          <div style={{ fontSize: 28, color: COLORS.primaryText }}>
+            a local-first sketch board
           </div>
         </div>
       </div>
-    ),
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div
+          style={{
+            fontSize: 62,
+            fontWeight: 700,
+            color: COLORS.text,
+            lineHeight: 1.15,
+            letterSpacing: -1.5,
+          }}
+        >
+          Draw freely. Keep it to yourself.
+        </div>
+        <div style={{ fontSize: 30, color: COLORS.muted, lineHeight: 1.4 }}>
+          Every board is saved in your own browser. No account, no server,
+          nothing uploaded.
+        </div>
+      </div>
+    </div>,
     {
       ...size,
       /**
