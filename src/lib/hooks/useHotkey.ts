@@ -32,6 +32,11 @@ export function useHotkey(
 ) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      // `key` is missing on some synthetic events — browser extensions, IMEs
+      // and assistive tools all dispatch keydowns the DOM constructor would
+      // not. They carry no key, so they cannot match any shortcut and are
+      // dropped rather than allowed to throw out of the listener.
+      if (typeof event.key !== 'string' || !event.key) return;
       if (event.key.toLowerCase() !== key.toLowerCase()) return;
       if (event.altKey || event.metaKey || event.ctrlKey) return;
       if (!allowWhileTyping && isTypingTarget(event.target)) return;
