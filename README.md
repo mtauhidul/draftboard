@@ -12,7 +12,7 @@ Draftboard is a wrapper around [Excalidraw](https://github.com/excalidraw/excali
 - **Full Excalidraw canvas** — shapes, arrows, text, freehand drawing, images, the library, the command palette and keyboard shortcuts, exactly as Excalidraw ships them.
 - **Saved automatically** — edits are written to your browser's local database shortly after you stop drawing, and again if you close the tab mid-stroke.
 - **Light and dark theme** — remembered between visits, and the canvas follows it.
-- **Backup** — export every board to a single JSON file, so your work survives clearing site data or moving machines.
+- **Backup** — export every board to a single JSON file and import it back, so your work survives clearing site data or moving machines.
 - **Installable** — add it to your home screen or dock and it opens like a native app.
 
 ## Your data stays with you
@@ -23,8 +23,9 @@ Loading a board makes no network request at all — not to Excalidraw's servers,
 
 Two consequences worth knowing:
 
-- Clearing your browser's site data will delete your boards. Use **Export** to keep a backup.
+- Clearing your browser's site data will delete your boards. Use **Export** to keep a backup, and **Import** to restore it.
 - Boards live per browser and per device — they are not synced anywhere, which is also why nobody else can read them.
+- Importing never overwrites: a board whose id is already stored is skipped, so restoring the same file twice is safe and local edits always win.
 
 ## Getting started
 

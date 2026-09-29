@@ -1,8 +1,8 @@
 'use client';
 
-import { Download, Lock, Plus } from 'lucide-react';
+import { Download, Lock, Plus, Upload } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { BoardGrid } from '@/components/boards/BoardGrid';
 import { CreateBoardDialog } from '@/components/boards/CreateBoardDialog';
@@ -23,6 +23,7 @@ type Props = {
   onDuplicate: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onExport: () => Promise<void>;
+  onImport: (file: File) => Promise<string>;
 };
 
 /**
@@ -44,9 +45,13 @@ export function BoardList({
   onDuplicate,
   onDelete,
   onExport,
+  onImport,
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
 
   useHotkey('n', () => {
     if (!creating) setCreating(true);
@@ -56,12 +61,27 @@ export function BoardList({
 
   async function handleExport() {
     setExporting(true);
+    setNotice(null);
     try {
       await onExport();
     } catch (error) {
       console.error('Export failed', error);
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleImport(file: File) {
+    setImporting(true);
+    setNotice(null);
+    try {
+      setNotice(await onImport(file));
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : 'That file could not be read.'
+      );
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -129,6 +149,38 @@ export function BoardList({
             <span className="hidden sm:inline">Export</span>
           </button>
 
+          {/*
+           * The file input itself is never shown: a native file control cannot
+           * be styled to match the island, and its label would be the only
+           * chrome on the bar. The button raises the picker instead, and the
+           * input stays in the tree because a detached one cannot be clicked.
+           */}
+          <button
+            type="button"
+            onClick={() => importInput.current?.click()}
+            disabled={importing}
+            title="Restore boards from a backup file"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-foreground transition-colors hover:bg-[var(--button-hover-bg)] disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Upload className="size-4" aria-hidden />
+            <span className="hidden sm:inline">
+              {importing ? 'Importing…' : 'Import'}
+            </span>
+          </button>
+          <input
+            ref={importInput}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={event => {
+              const file = event.target.files?.[0];
+              // Clearing the value is what lets the same file be picked twice
+              // in a row: without it the second pick fires no change event.
+              event.target.value = '';
+              if (file) void handleImport(file);
+            }}
+          />
+
           <ThemeToggleButton />
 
           {/* The one filled action, in Excalidraw's primary violet. */}
@@ -144,6 +196,21 @@ export function BoardList({
       </header>
 
       <main className="flex-1 overflow-y-auto px-2 pt-2 pb-2 sm:px-3">
+        {/*
+         * The result of the last import lives here rather than in a toast:
+         * it is the one message the user has to be able to re-read, and a
+         * toast that has already faded is no use when deciding whether the
+         * restore worked. `aria-live` so the outcome is announced too.
+         */}
+        {notice && (
+          <p
+            aria-live="polite"
+            className="mb-2 rounded-md border border-dashed border-[var(--card-outline-color)] px-3 py-2 text-xs text-muted-foreground"
+          >
+            {notice}
+          </p>
+        )}
+
         <BoardGrid
           boards={boards}
           loading={loading}
