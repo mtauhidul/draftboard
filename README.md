@@ -1,33 +1,25 @@
 # Draftboard
 
-A private, offline sketch board. Create a board, draw on it, come back later — everything stays on your own device.
+A private sketch board that works offline. Make a board, draw on it, and come back later. Everything stays on your device.
 
-Live at **<https://draftboard-canvas.vercel.app>**.
+**Try it:** <https://draftboard-canvas.vercel.app>
 
-Draftboard is a wrapper around [Excalidraw](https://github.com/excalidraw/excalidraw), the excellent open-source whiteboard library, with a small board manager on top so you can keep several boards instead of one endless canvas.
+It's a small board manager built around [Excalidraw](https://github.com/excalidraw/excalidraw), so you can keep several boards instead of one endless canvas.
 
-## Features
+## What it does
 
-- **Multiple boards** — create, rename, duplicate and delete boards. Each has a title, a short description and a category.
-- **Full Excalidraw canvas** — shapes, arrows, text, freehand drawing, images, the library, the command palette and keyboard shortcuts, exactly as Excalidraw ships them.
-- **Saved automatically** — edits are written to your browser's local database shortly after you stop drawing, and again if you close the tab mid-stroke.
-- **Light and dark theme** — remembered between visits, and the canvas follows it.
-- **Backup** — export every board to a single JSON file and import it back, so your work survives clearing site data or moving machines.
-- **Installable** — add it to your home screen or dock and it opens like a native app.
+- Create, rename, duplicate and delete boards
+- Full Excalidraw canvas: shapes, arrows, text, freehand and images
+- Saves automatically in your browser
+- Light and dark theme
+- Export all boards to one JSON file and import them back
+- Installable as an app
 
 ## Your data stays with you
 
-There is no account, no server and no database behind Draftboard. Boards are saved in your own browser, using IndexedDB and `localStorage`. Nothing is uploaded, and there is no analytics or tracking.
+There's no account, server or tracking. Boards live in your browser's storage, so clearing site data deletes them. Use **Export** to keep a backup.
 
-Loading a board makes no network request at all — not to Excalidraw's servers, and not anywhere else. Two links in the canvas chrome (Help, and Browse libraries) point out to `excalidraw.com`, but they only do anything if you click them; nothing is sent on your behalf otherwise.
-
-Two consequences worth knowing:
-
-- Clearing your browser's site data will delete your boards. Use **Export** to keep a backup, and **Import** to restore it.
-- Boards live per browser and per device — they are not synced anywhere, which is also why nobody else can read them.
-- Importing never overwrites: a board whose id is already stored is skipped, so restoring the same file twice is safe and local edits always win.
-
-## Getting started
+## Run it locally
 
 ```bash
 pnpm install
@@ -36,13 +28,6 @@ pnpm dev
 
 Then open <http://localhost:3000>.
 
-```bash
-pnpm build   # production build
-pnpm lint    # eslint
-```
-
 ## Credits
 
-Built by **Mir Tauhidul Islam**.
-
-The canvas is [Excalidraw](https://github.com/excalidraw/excalidraw) by the Excalidraw team, used through [`@excalidraw/excalidraw`](https://www.npmjs.com/package/@excalidraw/excalidraw) and licensed under the MIT License. Draftboard is an independent wrapper and is not affiliated with Excalidraw.
+Made by Mir Tauhidul Islam. The canvas is [Excalidraw](https://github.com/excalidraw/excalidraw) (MIT license). This project isn't affiliated with the Excalidraw team.
